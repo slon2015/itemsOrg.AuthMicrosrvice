@@ -1,5 +1,7 @@
 package com.slonsystems.itemsOrg.AuthMicroservice.auth;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
 import com.slonsystems.itemsOrg.AuthMicroservice.auth.AuthResponse;
 import com.slonsystems.itemsOrg.AuthMicroservice.pojos.User;
 import com.slonsystems.itemsOrg.AuthMicroservice.services.UserService;
@@ -7,11 +9,9 @@ import com.slonsystems.itemsOrg.AuthMicroservice.tokens.TokenGenerationStrategy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -28,7 +28,10 @@ public class AuthController {
     }
 
     @PostMapping("/auth")
-    public ResponseEntity<Map<String, Object>> auth(@RequestParam(value = "Login") String login, @RequestParam(value = "Password") String password){
+    public ResponseEntity<Map<String, Object>> auth(@RequestBody String json){
+        ReadContext ctx = JsonPath.parse(json);
+        String login = ctx.read("$..login", List.class).get(0).toString();
+        String password = ctx.read("$..password", List.class).get(0).toString();
         AuthResponse authResult = service.auth(login,password);
 
         Map<String, Object> responseMap = new TreeMap<>();

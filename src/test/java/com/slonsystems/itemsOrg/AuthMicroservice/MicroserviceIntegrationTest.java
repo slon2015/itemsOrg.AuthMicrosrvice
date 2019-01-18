@@ -1,5 +1,6 @@
 package com.slonsystems.itemsOrg.AuthMicroservice;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import com.slonsystems.itemsOrg.AuthMicroservice.pojos.User;
 import org.junit.Assert;
@@ -32,6 +33,7 @@ import static org.hamcrest.Matchers.equalTo;
 public class MicroserviceIntegrationTest {
 
     private final long tokenLifetime = 1000 * 60 * 60;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     JdbcOperations jdbcOperations;
@@ -41,7 +43,12 @@ public class MicroserviceIntegrationTest {
 
     @Test
     public void userRegistration() throws Exception{
-        this.mvc.perform(MockMvcRequestBuilders.post("/register?Login=test1&Password=1234"))
+        User user = new User();
+        user.setLogin("test1");
+        user.setPassword("1234");
+
+        this.mvc.perform(MockMvcRequestBuilders.post("/register")
+            .content(mapper.writeValueAsBytes(user)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status",equalTo("success")))
@@ -72,8 +79,8 @@ public class MicroserviceIntegrationTest {
         user.setPassword("1234");
         addUser(user);
 
-        this.mvc.perform(MockMvcRequestBuilders.post("/register?Login="+
-                user.getLogin()+"&Password="+user.getPassword()))
+        this.mvc.perform(MockMvcRequestBuilders.post("/register")
+            .content(mapper.writeValueAsBytes(user)))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status",equalTo("failed")))
@@ -95,8 +102,8 @@ public class MicroserviceIntegrationTest {
         user.setPassword("1234");
         addUser(user);
 
-        this.mvc.perform(MockMvcRequestBuilders.post("/auth?Login="+
-                user.getLogin()+"&Password="+user.getPassword()))
+        this.mvc.perform(MockMvcRequestBuilders.post("/auth")
+            .content(mapper.writeValueAsBytes(user)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status",equalTo("success")))
@@ -128,8 +135,8 @@ public class MicroserviceIntegrationTest {
         user.setLogin("AuthTest1");
         user.setPassword("1234");
 
-        this.mvc.perform(MockMvcRequestBuilders.post("/auth?Login="+
-                user.getLogin()+"&Password="+user.getPassword()))
+        this.mvc.perform(MockMvcRequestBuilders.post("/auth")
+            .content(mapper.writeValueAsBytes(user)))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.status",equalTo("failed")))
@@ -156,7 +163,8 @@ public class MicroserviceIntegrationTest {
         jdbcOperations.update("INSERT INTO \"Users\"(\"ID\",\"Login\"" +
                 ",\"Password\",token,lifetime,tokenbirthtime) VALUES(?,?,?,'token1',"+tokenLifetime+",?)",params,types);
 
-        this.mvc.perform(MockMvcRequestBuilders.get("/tokenResolve?Token=token1"))
+        this.mvc.perform(MockMvcRequestBuilders.get("/tokenResolve")
+            .content("{\"Token\": \"token1\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.UID",equalTo(user.getId().intValue())));
@@ -165,7 +173,8 @@ public class MicroserviceIntegrationTest {
     @Test
     public void nonExistingTokenResolving() throws Exception{
 
-        this.mvc.perform(MockMvcRequestBuilders.get("/tokenResolve?Token=token2"))
+        this.mvc.perform(MockMvcRequestBuilders.get("/tokenResolve")
+            .content("{\"Token\":\"token2\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }
@@ -184,7 +193,8 @@ public class MicroserviceIntegrationTest {
         jdbcOperations.update("INSERT INTO \"Users\"(\"ID\",\"Login\"" +
                 ",\"Password\",token,lifetime,tokenbirthtime) VALUES(?,?,?,'token3',"+tokenLifetime+",?)",params,types);
 
-        this.mvc.perform(MockMvcRequestBuilders.get("/tokenResolve?Token=token1"))
+        this.mvc.perform(MockMvcRequestBuilders.get("/tokenResolve")
+            .content("{\"Token\":\"token3\"}"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON));
     }

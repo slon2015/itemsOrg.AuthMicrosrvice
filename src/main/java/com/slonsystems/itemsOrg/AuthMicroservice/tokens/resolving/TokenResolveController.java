@@ -1,12 +1,15 @@
 package com.slonsystems.itemsOrg.AuthMicroservice.tokens.resolving;
 
+import com.jayway.jsonpath.JsonPath;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -21,7 +24,9 @@ public class TokenResolveController {
     }
 
     @GetMapping("/tokenResolve")
-    public ResponseEntity<Map<String,Object>> resolve(@RequestParam("Token") String token){
+    public ResponseEntity<Map<String,Object>> resolve(@RequestBody String json){
+        List<String> tokens = JsonPath.parse(json).read("$..Token", List.class );
+        String token = tokens.get(0);
         Map<String, Object> responseMap = new TreeMap<>();
         ResponseEntity<Map<String, Object>> response = null;
 

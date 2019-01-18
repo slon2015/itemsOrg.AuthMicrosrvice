@@ -5,6 +5,7 @@ import com.slonsystems.itemsOrg.AuthMicroservice.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.List;
 
 @Service
@@ -22,7 +23,8 @@ public class TokensService {
         User user = userRepository.findByToken(token).orElse(null);
 
         response.setToken(token);
-        if(user != null){
+        Instant now = Instant.now();
+        if(user != null && user.getTokenBirthTime() + user.getTokenLifeTime() > now.toEpochMilli()){
             response.setUID(user.getId());
             response.setBirth(user.getTokenBirthTime());
             response.setLifetime(user.getTokenLifeTime());

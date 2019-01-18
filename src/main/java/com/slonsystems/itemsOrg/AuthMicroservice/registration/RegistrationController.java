@@ -1,13 +1,17 @@
 package com.slonsystems.itemsOrg.AuthMicroservice.registration;
 
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.ReadContext;
 import com.slonsystems.itemsOrg.AuthMicroservice.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -21,8 +25,11 @@ public class RegistrationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String,Object>> register(@RequestParam("Login") String login,
-                                                       @RequestParam("Password") String password){
+    public ResponseEntity<Map<String,Object>> register(@RequestBody String json){
+
+        ReadContext ctx = JsonPath.parse(json);
+        String login = ctx.read("$..login", List.class).get(0).toString();
+        String password = ctx.read("$..password", List.class).get(0).toString();
 
         RegistrationResponse result = service.registration(login,password);
 
